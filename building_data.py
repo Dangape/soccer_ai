@@ -11,12 +11,12 @@ Codes:
 '''
 start = time.time()
 
-for url in scoresfixtures("https://fbref.com/en/comps/24/1559/schedule/2017-Serie-A-Scores-and-Fixtures","div_sched_1559_1"):
+for url in scoresfixtures("https://fbref.com/en/comps/24/1760/schedule/2018-Serie-A-Scores-and-Fixtures","div_sched_1760_1"):
     print(url)
     planilhas(url)
 
 
-tratamento("Brasileirao-2017")
+tratamento("Brasileirao-2018")
 
 print('Duration: {} seconds'.format(time.time() - start))
 

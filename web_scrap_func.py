@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import xlsxwriter
 import os
-import time
+import re
 
 
 def scoresfixtures(link, ids):
@@ -69,7 +69,6 @@ def scoresfixtures(link, ids):
         else:
             pass
     return s9
-
 
 def planilhas(url):
     '''
@@ -160,10 +159,9 @@ def planilhas(url):
     df_3 = df_1.append(df_2)
 
     # save excel
-    writer = pd.ExcelWriter("C:/Users/DANIEL BEMERGUY/OneDrive/soccer_ai/Data/2017_A/"+nome_final + '.xlsx')
+    writer = pd.ExcelWriter("C:/Users/DANIEL BEMERGUY/OneDrive/soccer_ai/Data/2018_A/"+nome_final + '.xlsx')
     df_3.to_excel(writer, "Estatisticas")
     writer.save()
-
 
 def tratamento(nome):
     '''
@@ -174,7 +172,7 @@ def tratamento(nome):
     Output:
         - Dataframe of all games save as excel sheet
     '''
-    path = "C:/Users/DANIEL BEMERGUY/OneDrive/soccer_ai/Data/2017_A/"
+    path = "C:/Users/DANIEL BEMERGUY/OneDrive/soccer_ai/Data/2018_A/"
     entries = os.listdir(path)
     base = {}
     base = pd.DataFrame(base)
@@ -191,4 +189,61 @@ def tratamento(nome):
     base.to_excel(writer, nome)
     writer.save()
 
+def get_mkt_infos(years, division):
+    headers = {'User-Agent':
+                   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
 
+    df = pd.DataFrame()  # creating dataframe
+    for year in years:
+        url = 'https://www.transfermarkt.com.br/campeonato-brasileiro-serie-a/startseite/wettbewerb/BRA' + division + '/plus/?saison_id=' + year
+        req = requests.get(url, headers=headers)
+        if req.status_code == 200:
+            content = req.content
+
+        soup = BeautifulSoup(content, 'html.parser')
+
+        teams = []
+        values = []
+        players_amt = []
+
+        valuation = soup.find_all("td", {"class": "rechts"})
+        valuation = valuation[2:-20]
+
+        players = soup.find_all("td", {"class": "zentriert"})
+
+        for value in valuation:
+            try:
+                m = re.search('title="', str(value))
+                start = m.end()
+                end = str(value).find('">', start)
+                teams.append(str(value)[start:end])
+                end_value = str(value).find('.', end)
+                values.append(str(value)[end + 2:end_value - 3])
+            except:
+                continue
+
+        for amt in players:
+            try:
+                m = re.search('title="', str(amt))
+                start = m.end()
+                end = str(amt).find('">', start)
+                end_value = str(amt).find('</a></td>', end)
+                players_amt.append(str(amt)[end + 2:end_value])
+            except:
+                continue
+
+        players_amt = players_amt[1::2]
+        players_amt = players_amt[:20]
+
+        # print(len(teams),len(values),len(players_amt))
+        # print(players_amt)
+        year = str(int(year) + 1)
+        data = pd.DataFrame({'team': teams, 'value': values, 'player_amt': players_amt, 'year': year})
+        df = df.append(data)
+    new_names = {'Clube Atlético Bragantino (SP)': 'RB Bragantino',
+                 'Clube Atlético Paranaense': 'Athletico Paranaense'}  # renaming clubs
+    df.replace({'team': new_names}, inplace=True)
+    # df.drop_duplicates(subset=['team'],keep='first',inplace=True) #removing duplicates
+    df.reset_index(inplace=True, drop=True)
+    # df['value_per_player'] = df['value'].astype(int)/df['player_amt'].astype(int)
+    return df
