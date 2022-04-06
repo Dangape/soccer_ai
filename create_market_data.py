@@ -1,11 +1,9 @@
 import pandas as pd
-import requests
-from bs4 import BeautifulSoup
-import re
 from web_scrap_func import *
 
 years = ['2016', '2017', '2018','2019', '2020', '2021']
 division = '1'
+
 df = get_mkt_infos(years,division)
 df = df.apply(lambda x: x.str.replace(',', '.'))
 df.value = df.value.astype(float)

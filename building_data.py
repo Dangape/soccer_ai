@@ -15,7 +15,6 @@ for url in scoresfixtures("https://fbref.com/en/comps/24/1760/schedule/2018-Seri
     print(url)
     planilhas(url)
 
-
 tratamento("Brasileirao-2018")
 
 print('Duration: {} seconds'.format(time.time() - start))
